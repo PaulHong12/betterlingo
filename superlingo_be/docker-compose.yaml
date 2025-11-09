@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: superlingo_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=superlingo_db
+      - POSTGRES_USER=superlingo_user
+      - POSTGRES_PASSWORD=superlingo_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superlingo_user -d superlingo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    container_name: superlingo_web
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=superlingo_db
+      - DB_USER=superlingo_user
+      - DB_PASSWORD=superlingo_password
+      - DB_HOST=db
+      - DB_PORT=5432
+
+      - GOOGLE_API_KEY=AIzaSyDq_lIKbhXY8h5nxmuRp4vvfwc3az6zMgc
+
+      - GOOGLE_APPLICATION_CREDENTIALS=gcp-credentials.json
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
